@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound Tracker</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      gap: 2rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: #888;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    #track-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      user-select: none;
+    }
+
+    #track-btn:hover {
+      background: #1d4ed8;
+    }
+
+    #track-btn:active {
+      transform: scale(0.94);
+      background: #1e40af;
+      box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
+    }
+
+    #log-section {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    #log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    #log-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #clear-btn {
+      background: none;
+      border: 1px solid #333;
+      color: #555;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    #clear-btn:hover {
+      color: #e55;
+      border-color: #e55;
+    }
+
+    #log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+      padding: 0.5rem 0.75rem;
+      background: #1a1a1a;
+      border-radius: 6px;
+      border-left: 3px solid #2563eb;
+      animation: slide-in 0.15s ease;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry-count {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #2563eb;
+      min-width: 1.8rem;
+      text-align: right;
+    }
+
+    .entry-time {
+      font-size: 0.9rem;
+      color: #ccc;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .entry-delta {
+      font-size: 0.8rem;
+      color: #555;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #empty-state {
+      text-align: center;
+      color: #444;
+      font-size: 0.9rem;
+      padding: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sound Tracker</h1>
+
+  <button id="track-btn">Log Event</button>
+
+  <section id="log-section">
+    <div id="log-header">
+      <span id="log-title">Event Log</span>
+      <button id="clear-btn">Clear</button>
+    </div>
+    <div id="log">
+      <div id="empty-state">No events yet — press the button to start tracking.</div>
+    </div>
+  </section>
+
+  <script>
+    // Timestamps stored as seconds since epoch, comma-separated in URL hash
+    // e.g. #1711234567,1711234580,...
+
+    function loadTimestamps() {
+      const hash = location.hash.slice(1);
+      if (!hash) return [];
+      return hash.split(',').map(Number).filter(n => n > 0);
+    }
+
+    function saveTimestamps(timestamps) {
+      const hash = timestamps.length ? '#' + timestamps.join(',') : '#';
+      history.replaceState(null, '', hash || window.location.pathname);
+    }
+
+    function formatTime(ts) {
+      return new Date(ts * 1000).toLocaleTimeString([], {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+
+    function formatDate(ts) {
+      return new Date(ts * 1000).toLocaleDateString([], {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+    }
+
+    function formatDelta(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return m > 0 ? `+${m}m ${s}s` : `+${s}s`;
+    }
+
+    let timestamps = loadTimestamps();
+
+    const logEl = document.getElementById('log');
+    const emptyEl = document.getElementById('empty-state');
+
+    function makeEntry(ts, index, prevTs) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+
+      const count = document.createElement('span');
+      count.className = 'entry-count';
+      count.textContent = '#' + (index + 1);
+
+      const time = document.createElement('span');
+      time.className = 'entry-time';
+      time.textContent = formatDate(ts) + '  ' + formatTime(ts);
+
+      entry.appendChild(count);
+      entry.appendChild(time);
+
+      if (prevTs != null) {
+        const delta = document.createElement('span');
+        delta.className = 'entry-delta';
+        delta.textContent = formatDelta(ts - prevTs);
+        entry.appendChild(delta);
+      }
+
+      return entry;
+    }
+
+    function renderLog() {
+      logEl.innerHTML = '';
+
+      if (timestamps.length === 0) {
+        logEl.appendChild(emptyEl);
+        return;
+      }
+
+      // Render newest first
+      for (let i = timestamps.length - 1; i >= 0; i--) {
+        logEl.appendChild(makeEntry(timestamps[i], i, timestamps[i - 1]));
+      }
+    }
+
+    document.getElementById('track-btn').addEventListener('click', () => {
+      const now = Math.floor(Date.now() / 1000);
+      timestamps.push(now);
+      saveTimestamps(timestamps);
+
+      emptyEl.remove();
+      // Prepend new entry (newest first)
+      const prevTs = timestamps.length > 1 ? timestamps[timestamps.length - 2] : null;
+      logEl.insertBefore(makeEntry(now, timestamps.length - 1, prevTs), logEl.firstChild);
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      if (timestamps.length === 0) return;
+      if (!confirm('Clear all ' + timestamps.length + ' event(s)?')) return;
+      timestamps = [];
+      saveTimestamps(timestamps);
+      renderLog();
+    });
+
+    // Restore state if someone navigates back/forward
+    window.addEventListener('hashchange', () => {
+      timestamps = loadTimestamps();
+      renderLog();
+    });
+
+    renderLog();
+  </script>
+</body>
+</html>
