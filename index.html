@@ -1,62 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sound Tracker</title>
   <style>
+    /* ── Tokens ─────────────────────────────────────────────────────────── */
+
+    :root {
+      --bg:            #f4f4f5;
+      --surface:       #ffffff;
+      --text:          #18181b;
+      --text-muted:    #71717a;
+      --text-faint:    #a1a1aa;
+      --border:        #e4e4e7;
+      --accent:        #2563eb;
+      --accent-hover:  #1d4ed8;
+      --accent-active: #1e40af;
+    }
+
+    [data-theme="dark"] {
+      --bg:            #0f0f0f;
+      --surface:       #1a1a1a;
+      --text:          #e0e0e0;
+      --text-muted:    #71717a;
+      --text-faint:    #444;
+      --border:        #2a2a2a;
+      --accent:        #2563eb;
+      --accent-hover:  #1d4ed8;
+      --accent-active: #1e40af;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────────── */
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #0f0f0f;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 2rem 1rem;
       gap: 2rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
+
+    #top-bar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     h1 {
       font-size: 1.25rem;
       font-weight: 500;
-      color: #888;
+      color: var(--text-muted);
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
+
+    #theme-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    #theme-btn:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    /* ── Track button ────────────────────────────────────────────────────── */
 
     #track-btn {
       width: 180px;
       height: 180px;
       border-radius: 50%;
       border: none;
-      background: #2563eb;
+      background: var(--accent);
       color: white;
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      transition: background 0.15s, transform 0.1s;
       user-select: none;
     }
 
-    #track-btn:hover {
-      background: #1d4ed8;
-    }
+    #track-btn:hover  { background: var(--accent-hover); }
+    #track-btn:active { transform: scale(0.94); background: var(--accent-active); }
 
-    #track-btn:active {
-      transform: scale(0.94);
-      background: #1e40af;
-      box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
-    }
+    /* ── Log ─────────────────────────────────────────────────────────────── */
 
     #log-section {
       width: 100%;
@@ -73,15 +126,15 @@
     #log-title {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #555;
+      color: var(--text-faint);
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
 
     #clear-btn {
       background: none;
-      border: 1px solid #333;
-      color: #555;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
       font-size: 0.75rem;
       padding: 0.25rem 0.6rem;
       border-radius: 4px;
@@ -105,9 +158,9 @@
       gap: 1rem;
       align-items: baseline;
       padding: 0.5rem 0.75rem;
-      background: #1a1a1a;
+      background: var(--surface);
       border-radius: 6px;
-      border-left: 3px solid #2563eb;
+      border-left: 3px solid var(--accent);
       animation: slide-in 0.15s ease;
     }
 
@@ -119,34 +172,37 @@
     .entry-count {
       font-size: 0.75rem;
       font-weight: 700;
-      color: #2563eb;
+      color: var(--accent);
       min-width: 1.8rem;
       text-align: right;
     }
 
     .entry-time {
       font-size: 0.9rem;
-      color: #ccc;
+      color: var(--text);
       font-variant-numeric: tabular-nums;
     }
 
     .entry-delta {
       font-size: 0.8rem;
-      color: #555;
+      color: var(--text-muted);
       margin-left: auto;
       font-variant-numeric: tabular-nums;
     }
 
     #empty-state {
       text-align: center;
-      color: #444;
+      color: var(--text-faint);
       font-size: 0.9rem;
       padding: 2rem 0;
     }
   </style>
 </head>
 <body>
-  <h1>Sound Tracker</h1>
+  <div id="top-bar">
+    <h1>Sound Tracker</h1>
+    <button id="theme-btn">Dark mode</button>
+  </div>
 
   <button id="track-btn">Log Event</button>
 
@@ -161,8 +217,12 @@
   </section>
 
   <script>
-    // Timestamps stored as seconds since epoch, comma-separated in URL hash
-    // e.g. #1711234567,1711234580,...
+    // URL format: ?theme=dark#1711234567,1711234580,...
+    // Theme param is omitted entirely when light (the default).
+
+    function loadTheme() {
+      return new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light';
+    }
 
     function loadTimestamps() {
       const hash = location.hash.slice(1);
@@ -170,9 +230,17 @@
       return hash.split(',').map(Number).filter(n => n > 0);
     }
 
-    function saveTimestamps(timestamps) {
-      const hash = timestamps.length ? '#' + timestamps.join(',') : '#';
-      history.replaceState(null, '', hash || window.location.pathname);
+    function saveUrl(push = false) {
+      const search = theme === 'dark' ? '?theme=dark' : '';
+      const hash   = timestamps.length ? '#' + timestamps.join(',') : '';
+      const url    = window.location.pathname + search + hash;
+      push ? history.pushState(null, '', url) : history.replaceState(null, '', url);
+    }
+
+    function applyTheme() {
+      document.documentElement.dataset.theme = theme;
+      document.getElementById('theme-btn').textContent =
+        theme === 'dark' ? 'Light mode' : 'Dark mode';
     }
 
     function formatTime(ts) {
@@ -188,14 +256,22 @@
     }
 
     function formatDelta(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return m > 0 ? `+${m}m ${s}s` : `+${s}s`;
+      let roundDirection = 'floor';
+      let symbol = '+';
+      if (seconds < 0){
+        roundDirection = 'ceil';
+        symbol = '-';
+      }
+      const secondsAbs = Math.abs(seconds);
+      const m = Math[roundDirection](secondsAbs / 60);
+      const s = secondsAbs % 60;
+      return m > 0 ? `${symbol}${m}m ${s}s` : `${symbol}${s}s`;
     }
 
+    let theme      = loadTheme();
     let timestamps = loadTimestamps();
 
-    const logEl = document.getElementById('log');
+    const logEl   = document.getElementById('log');
     const emptyEl = document.getElementById('empty-state');
 
     function makeEntry(ts, index, prevTs) {
@@ -231,7 +307,6 @@
         return;
       }
 
-      // Render newest first
       for (let i = timestamps.length - 1; i >= 0; i--) {
         logEl.appendChild(makeEntry(timestamps[i], i, timestamps[i - 1]));
       }
@@ -240,10 +315,9 @@
     document.getElementById('track-btn').addEventListener('click', () => {
       const now = Math.floor(Date.now() / 1000);
       timestamps.push(now);
-      saveTimestamps(timestamps);
+      saveUrl();
 
       emptyEl.remove();
-      // Prepend new entry (newest first)
       const prevTs = timestamps.length > 1 ? timestamps[timestamps.length - 2] : null;
       logEl.insertBefore(makeEntry(now, timestamps.length - 1, prevTs), logEl.firstChild);
     });
@@ -252,16 +326,22 @@
       if (timestamps.length === 0) return;
       if (!confirm('Clear all ' + timestamps.length + ' event(s)?')) return;
       timestamps = [];
-      saveTimestamps(timestamps);
+      saveUrl(true);
       renderLog();
     });
 
-    // Restore state if someone navigates back/forward
+    document.getElementById('theme-btn').addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      applyTheme();
+      saveUrl();
+    });
+
     window.addEventListener('hashchange', () => {
       timestamps = loadTimestamps();
       renderLog();
     });
 
+    applyTheme();
     renderLog();
   </script>
 </body>
